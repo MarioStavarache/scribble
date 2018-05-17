@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; background-color:rgb(88, 88, 247);}
+      form { background: #000;}
+      form input { border: 0; padding: 10px; width: 80%; }
+      form button { width: 20%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+      #nickname {
+        border: 0; 
+        padding: 10px; 
+        width: 80%;
+      }
+      #nickSelect {
+        width: 20%;
+        background: rgb(130, 224, 255); 
+        border: none; 
+        padding: 10px;
+      }
+      #drawboard {  
+        margin-top: 10px; 
+        margin-left: 10px;
+        margin-bottom: 10px;
+        height: 500px;
+        width: 60%;
+      }
+      #drawfield {
+        background-color: white; 
+        height: 500px;
+
+      }
+      #menubar {
+        margin-top: 10px;
+      }
+      #chatbox {
+        background-color:white;
+        float: right;
+        width: 250px;
+        height: 20px;
+        margin-top: 10px;
+        margin-right: 10px;
+        height: 500px;  
+      }
+      #timebox{
+        margin-right: 10px;
+        margin-left: 90%;
+        float: right;
+      }
+      .box {
+        float: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="drawboard" class="box">
+      <canvas id="drawfield">
+      </canvas>
+      <div id="menubar">
+        <input type="button" id="butBlack" style="background-color: black; width: 20px;">
+        <input type="button" id="butRed" style="background-color: red; width: 20px;">
+        <input type="button" id="butBlue" style="background-color: blue; width: 20px;">
+        <input type="button" id="butGreen" style="background-color: green; width: 20px;">
+        <br>
+        <input type="button" id="butReset" style="background-color: rgb(151, 147, 147); height: 25px;" value="Delete">
+      </div>
+    </div>
+    <div id="chatbox" class="box">  
+      <input id="nickname" autocomplete="off" placeholder="Nickname"><button id="nickSelect">Select</button> 
+      <ul id="messages"></ul>
+      <form action="">
+        <input id="m" autocomplete="off" placeholder="Message"/><button>Send</button>
+      </form>
+    </div>
+    <div id="timebox">
+      <label>Time left:</label>
+      <label id="time">60</label>
+      <label>s</label>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(function () {
+        $('#drawboard *').prop('disabled', true);
+        var canvas = document.getElementById('drawfield');
+        var context = canvas.getContext('2d');
+
+        $('#butBlack').on('click', function(){
+          context.fillStyle = 'rgb(0, 0, 0)';
+          context.storkeStyle = 'rgb(0, 0, 0)';
+        });
+        $('#butRed').on('click', function(){
+          context.fillStyle = 'rgb(255, 0, 0)';
+          context.strokeStyle = 'rgb(255, 0, 0)';
+        });
+        $('#butGreen').on('click', function(){
+          context.fillStyle = 'rgb(0, 255, 0)';
+          context.strokeStyle = 'rgb(0, 255, 0)';
+        });
+        $('#butBlue').on('click', function(){
+          context.fillStyle = 'rgb(0, 0, 255)';
+          context.strokeStyle = 'rgb(0, 0, 255)';
+        });
+        $('#butReset').on('click', function(){
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        });
+
+        var radius = 5;
+        var dragging = false;
+        context.lineWidth = radius*2;
+        var engage = function(e){
+          dragging = true;
+          putPoint(e);
+        }
+        var putPoint = function(e){
+          if (dragging) {
+            context.lineTo(e.clientX, e.clientY);
+            context.stroke();
+            context.beginPath();
+            context.arc(e.clientX, e.clientY, radius, 0, Math.PI*2);
+            context.fill();
+            context.beginPath();
+            context.moveTo(e.clientX, e.clientY);
+          }
+        }
+        var disengage = function(e){
+          dragging = false;
+          context.beginPath();
+        }
+        var time;
+        var countdown = function() {
+          canvas.removeEventListener('mousedown', countdown);
+          time = document.getElementById('time').innerHTML;
+          time = parseInt(time);
+      
+          if (time == 1) {
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.addEventListener('mousedown', countdown);  
+            document.getElementById('time').innerHTML = "60";
+            return;
+          }
+  
+          time--;
+          document.getElementById('time').innerHTML = time;
+          timeout = setTimeout(countdown, 1000);
+        } 
+        canvas.addEventListener('mousedown', engage);
+        canvas.addEventListener('mousedown', countdown);
+        canvas.addEventListener('mousemove', putPoint);
+        canvas.addEventListener('mouseup', disengage);
+        var socket = io();
+
+        $('#nickSelect').on('click', function(){
+          document.getElementById('nickname').style.display = 'none';
+          document.getElementById('nickSelect').style.display = 'none';
+          socket.on('connect message', function(name){
+            $('#messages').append($('<li>').text(name + " connected"));
+          });
+          socket.emit('connect message', $('#nickname').val());
+        });
+
+        $('form').submit(function(){
+          socket.emit('chat message', $('#m').val(), $('#nickname').val());
+            $('#m').val('');
+            return false;
+          });
+          socket.on('chat message', function(msg, name){
+            $('#messages').append($('<li>').text(name + ": "  + msg));
+          });
+          /*
+          socket.on('disconnect message', function(name){
+            $('#messages').append($('<li>').text(name + " disconnected"));
+          });
+          socket.emit('disconnect message', $('#nickname').val());
+          */
+      });
+    </script>  
+  </body>
+</html>
