@@ -7,11 +7,6 @@
       body { font: 13px Helvetica, Arial; background-color:rgb(88, 88, 247);}
       form { 
         background: #000;        
-        float: right;
-        width: 250px;
-        height: 20px;
-        margin-top: 474px;
-        margin-right: 10px;
       }
       form input { border: 0; padding: 10px; width: 80%; }
       form button { width: 20%; background: rgb(130, 224, 255); border: none; padding: 10px; }
@@ -49,7 +44,7 @@
         width: 250px;
         margin-top: 10px;
         margin-right: 10px;
-        height: 480px; 
+        height: 500px; 
         overflow: auto;
       }
       #timebox{
@@ -60,10 +55,12 @@
       .box {
         float: left;
       }
+      #wordlist {
+        margin-left: 75%;
+      }
     </style>
   </head>
   <body>
-    <!--hallo-->
     <div id="drawboard" class="box">
       <canvas id="drawfield">
       </canvas>
@@ -79,14 +76,19 @@
     <div id="chatbox" class="box">  
       <input id="nickname" autocomplete="off" placeholder="Nickname"><button id="nickSelect">Select</button> 
       <ul id="messages"></ul>
-    </div>
-    <form action="">
-        <input id="m" autocomplete="off" placeholder="Message"/><button>Send</button>
+      <form action="">
+          <input id="m" autocomplete="off" placeholder="Message"/><button>Send</button>
       </form>
+    </div>
     <div id="timebox">
       <label>Time left:</label>
       <label id="time">60</label>
       <label>s</label>
+    </div>
+    <div id="wordlist">
+        <input type="radio" name="drawword" id="radio1"><label id="word1">Baum</label><br>
+        <input type="radio" name="drawword" id="radio2"><label id="word2">Auto</label><br>
+        <input type="radio" name="drawword" id="radio3"><label id="word3">Haus</label>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
@@ -150,6 +152,8 @@
             context.clearRect(0, 0, canvas.width, canvas.height);
             canvas.addEventListener('mousedown', countdown);  
             document.getElementById('time').innerHTML = "60";
+            $('#wordlist').css('display', 'block');
+            console.log("hi")
             return;
           }
   
@@ -163,12 +167,30 @@
         canvas.addEventListener('mouseup', disengage);
         var socket = io();
 
-        $('#nickSelect').on('click', function(){
-          document.getElementById('nickname').style.display = 'none';
-          document.getElementById('nickSelect').style.display = 'none';
+        var word;
+        $('#radio1').click(function(){
+          word = $('#word1').text();
+          $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
-          $('form *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
+        })       
+        $('#radio2').click(function(){
+          word = $('#word2').text();
+          $('#wordlist').css('display', 'none');
+          $('#drawboard *').prop('disabled', false);
+          $('#drawfield').css("pointer-events", "auto");
+        })   
+        $('#radio3').click(function(){
+          word = $('#word3').text();
+          $('#wordlist').css('display', 'none');
+          $('#drawboard *').prop('disabled', false);
+          $('#drawfield').css("pointer-events", "auto");
+        })    
+
+        $('#nickSelect').on('click', function(){
+          $('#nickname').css('display', 'none');
+          $('#nickSelect').css('display', 'none');
+          $('form *').prop('disabled', false);
           socket.on('connect message', function(name){
             $('#messages').append($('<li>').text(name + " connected"));
           });
