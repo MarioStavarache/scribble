@@ -94,12 +94,14 @@
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       $(function () {
+        var socket = io();
         $('#drawboard *').prop('disabled', true);
+        $('#wordlist').css('display', 'none');
         $('form *').prop('disabled', true);
         $('#drawfield').css("pointer-events", "none");
+        
         var canvas = document.getElementById('drawfield');
         var context = canvas.getContext('2d');
-
         $('#butBlack').on('click', function(){
           context.fillStyle = 'rgb(0, 0, 0)';
           context.storkeStyle = 'rgb(0, 0, 0)';
@@ -118,9 +120,9 @@
         });
         $('#butReset').on('click', function(){
           context.clearRect(0, 0, canvas.width, canvas.height);
+          socket.emit('clear');
         });
 
-         var ka;
         var radius = 5;
         var dragging = false;
         context.lineWidth = radius*2;
@@ -137,27 +139,48 @@
             context.fill();
             context.beginPath();
             context.moveTo(e.clientX, e.clientY);
+            var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
+            sendMouse(e.clientX, e.clientY, color, dragging);
           }
+          var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
+          sendMouse(e.clientX, e.clientY, color, dragging);
         }
+
         var disengage = function(e){
           dragging = false;
           context.beginPath();
+        }
+
+        function sendMouse(posX, posY, color, dragging) {
+          var data = {
+            x: posX,
+            y: posY,
+            c: color,
+            d: dragging
+          };
+          socket.emit('mouse', data);
+        }
+
+        function rgbToHex(r, g, b) {
+          if (r > 255 || g > 255 || b > 255)
+              throw "Invalid color component";
+          return ((r << 16) | (g << 8) | b).toString(16);
         }
         var time;
         var countdown = function() {
           canvas.removeEventListener('mousedown', countdown);
           time = document.getElementById('time').innerHTML;
           time = parseInt(time);
-      
           if (time == 1) {
             context.clearRect(0, 0, canvas.width, canvas.height);
-            canvas.addEventListener('mousedown', countdown);  
+            canvas.addEventListener('mousedown', countdown);
             document.getElementById('time').innerHTML = "60";
             $('#wordlist').css('display', 'block');
             return;
           }
   
           time--;
+          socket.emit('time', time);
           document.getElementById('time').innerHTML = time;
           timeout = setTimeout(countdown, 1000);
         } 
@@ -165,10 +188,8 @@
         canvas.addEventListener('mousedown', countdown);
         canvas.addEventListener('mousemove', putPoint);
         canvas.addEventListener('mouseup', disengage);
-        var socket = io();
 
-          var word;
-         
+        var word;
         $('#radio1').click(function(){
           word = $('#word1').text();
           $('#wordlist').css('display', 'none');
@@ -189,6 +210,7 @@
         })    
 
         $('#nickSelect').on('click', function(){
+          $('#wordlist').css('display', 'block');
           $('#nickname').css('display', 'none');
           $('#nickSelect').css('display', 'none');
           $('form *').prop('disabled', false);
@@ -196,6 +218,46 @@
             $('#messages').append($('<li>').text(name + " connected"));
           });
           socket.emit('connect message', $('#nickname').val());
+        });
+
+        socket.on('time', function(time){
+          var canvas = document.getElementById('drawfield');
+          var context = canvas.getContext('2d');
+          document.getElementById('time').innerHTML = time;
+          if (time == 1) {
+            timeout = setTimeout(function(){
+              context.clearRect(0, 0, canvas.width, canvas.height);
+              canvas.addEventListener('mousedown', countdown);
+              document.getElementById('time').innerHTML = "60";
+              $('#wordlist').css('display', 'block');
+              return;
+            }, 1000);
+          }
+        });
+
+        socket.on('clear', function(){
+          var cCanvas = document.getElementById('drawfield');
+          var context = cCanvas.getContext('2d');
+          context.clearRect(0, 0, cCanvas.width, cCanvas.height);
+        });
+
+        socket.on('mouse', function(data) {
+          var canvasNew = document.getElementById('drawfield');
+          var contextNew = canvasNew.getContext('2d');
+          var hex = "#" + ("000000" + rgbToHex(data.c[0], data.c[1], data.c[2])).slice(-6);
+          contextNew.fillStyle = hex;
+          contextNew.strokeStyle = hex;
+          if (data.d) {
+            context.lineTo(data.x, data.y);
+            context.stroke();
+            context.beginPath();
+            contextNew.arc(data.x, data.y, 5, 0, Math.PI*2);
+            contextNew.fill();
+            contextNew.beginPath();
+            contextNew.moveTo(data.x, data.y);
+          } else {
+            contextNew.beginPath();
+          }
         });
 
         $('form').submit(function(){

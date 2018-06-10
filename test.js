@@ -15,12 +15,23 @@ io.on('connection', function(socket){
     });
     */
     socket.on('connect message', function(nickname){
-        console.log(nickname);
-        io.emit('connect message', nickname);
+        socket.broadcast.emit('connect message', nickname);
     })
 
     socket.on('chat message', function(msg, nickname){
-        io.emit('chat message', msg, nickname);
+        socket.broadcast.emit('chat message', msg, nickname);
+    });
+
+    socket.on('mouse', function(data){
+        socket.broadcast.emit('mouse', data);
+    });
+
+    socket.on('clear', function(){
+        socket.broadcast.emit('clear');
+    });
+
+    socket.on('time', function(time){
+        socket.broadcast.emit('time', time);
     });
   });
 
