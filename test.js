@@ -8,6 +8,10 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
+http.listen(3000, function(){
+    console.log('listening on *:3000');
+  });
+
 io.on('connection', function(socket){
     console.log('user ' + socket.id + ' connected');
     
@@ -37,7 +41,3 @@ io.on('connection', function(socket){
         socket.broadcast.emit('time', time);
     });
   });
-
-http.listen(3000, function(){
-  console.log('listening on *:3000');
-});
