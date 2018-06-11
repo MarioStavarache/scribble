@@ -95,6 +95,7 @@
     <script>
       $(function () {
         var socket = io();
+
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
         $('form *').prop('disabled', true);
@@ -123,9 +124,9 @@
           socket.emit('clear');
         });
 
-        var radius = 5;
+        var radius = 1;
+        context.lineWidth = 2;
         var dragging = false;
-        context.lineWidth = radius*2;
         var engage = function(e){
           dragging = true;
           putPoint(e);
@@ -145,7 +146,7 @@
           var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
           sendMouse(e.clientX, e.clientY, color, dragging);
         }
-        
+
         var disengage = function(e){
           dragging = false;
           context.beginPath();
@@ -195,13 +196,13 @@
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
-        })   
+        })       
         $('#radio2').click(function(){
           word = $('#word2').text();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
-        }) 
+        })   
         $('#radio3').click(function(){
           word = $('#word3').text();
           $('#wordlist').css('display', 'none');
@@ -214,6 +215,7 @@
           $('#nickname').css('display', 'none');
           $('#nickSelect').css('display', 'none');
           $('form *').prop('disabled', false);
+
           socket.on('connect message', function(name){
             $('#messages').append($('<li>').text(name + " connected"));
           });
@@ -251,7 +253,8 @@
             context.lineTo(data.x, data.y);
             context.stroke();
             context.beginPath();
-            contextNew.arc(data.x, data.y, 5, 0, Math.PI*2);
+            context.lineWidth = 2;
+            contextNew.arc(data.x, data.y, 1, 0, Math.PI*2);
             contextNew.fill();
             contextNew.beginPath();
             contextNew.moveTo(data.x, data.y);
@@ -267,12 +270,8 @@
           });
           socket.on('chat message', function(msg, name){
             $('#messages').append($('<li>').text(name + ": "  + msg));
-          });          
-          socket.on('disconnect message', function(name){
-            $('#messages').append($('<li>').text(name + " disconnected"));
           });
-          socket.emit('disconnect message', $('#nickname').val());    
-          });
+      });
     </script>  
   </body>
 </html>

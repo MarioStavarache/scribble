@@ -1,27 +1,25 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var players = [];
+
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
 io.on('connection', function(socket){
-    console.log('a user connected');
+    console.log('user ' + socket.id + ' connected');
+    
     /*
     socket.on('disconnect message', function(nickname){
       console.log(nickname + " disconnected");
       io.emit('disconnect message', nickname);
     });
     */
-
     socket.on('connect message', function(nickname){
         io.emit('connect message', nickname);
-    });
-
-    socket.on('disconnect',function(nickname){
-        io.emit('disconnect message', nickname);
-    });
+    })
 
     socket.on('chat message', function(msg, nickname){
         io.emit('chat message', msg, nickname);
