@@ -90,12 +90,15 @@
         <input type="radio" name="drawword" id="radio2"><label id="word2">Auto</label><br>
         <input type="radio" name="drawword" id="radio3"><label id="word3">Haus</label>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
     <script>
       $(function () {
         var socket = io();
+        var players = [];
 
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
@@ -212,7 +215,7 @@
         })    
 
         $('#nickSelect').on('click', function(){
-          $('#wordlist').css('display', 'block');
+          //$('#wordlist').css('display', 'block');
           $('#nickname').css('display', 'none');
           $('#nickSelect').css('display', 'none');
           $('form *').prop('disabled', false);
@@ -221,6 +224,12 @@
             $('#messages').append($('<li>').text(name + " connected"));
           });
           socket.emit('connect message', $('#nickname').val());
+
+          socket.on('adduser',function(name){
+            console.log(name + ' added');
+            players.push(name);
+          });
+          socket.emit('adduser', $('#nickname').val());
         });
 
         socket.on('time', function(time){
@@ -269,9 +278,12 @@
             $('#m').val('');
             return false;
           });
+
           socket.on('chat message', function(msg, name){
             $('#messages').append($('<li>').text(name + ": "  + msg));
           });
+
+          
       });
     </script>  
   </body>
