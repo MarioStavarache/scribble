@@ -14,12 +14,17 @@ io.on('connection', function(socket){
       io.emit('disconnect message', nickname);
     });
     */
+
     socket.on('connect message', function(nickname){
-        socket.broadcast.emit('connect message', nickname);
-    })
+        io.emit('connect message', nickname);
+    });
+
+    socket.on('disconnect',function(nickname){
+        io.emit('disconnect message', nickname);
+    });
 
     socket.on('chat message', function(msg, nickname){
-        socket.broadcast.emit('chat message', msg, nickname);
+        io.emit('chat message', msg, nickname);
     });
 
     socket.on('mouse', function(data){

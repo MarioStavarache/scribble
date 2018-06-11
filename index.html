@@ -145,7 +145,7 @@
           var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
           sendMouse(e.clientX, e.clientY, color, dragging);
         }
-
+        
         var disengage = function(e){
           dragging = false;
           context.beginPath();
@@ -195,13 +195,13 @@
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
-        })       
+        })   
         $('#radio2').click(function(){
           word = $('#word2').text();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
-        })   
+        }) 
         $('#radio3').click(function(){
           word = $('#word3').text();
           $('#wordlist').css('display', 'none');
@@ -267,14 +267,12 @@
           });
           socket.on('chat message', function(msg, name){
             $('#messages').append($('<li>').text(name + ": "  + msg));
-          });
-          /*
+          });          
           socket.on('disconnect message', function(name){
             $('#messages').append($('<li>').text(name + " disconnected"));
           });
-          socket.emit('disconnect message', $('#nickname').val());
-          */
-      });
+          socket.emit('disconnect message', $('#nickname').val());    
+          });
     </script>  
   </body>
 </html>
