@@ -17,10 +17,15 @@ io.on('connection', function(socket){
     //socket.emit('entrance', {message: 'Your ID is #' + socket.id}); 
 
     //adding a user to the players list.
-    socket.on('addUser', function (name) {
-        players.push(name);
-        io.emit('addUser', name);
+    socket.on('adduser', function (name) {
         io.emit('init', players);
+        players.push(name);
+        io.emit('adduser', name);
+        socket.once('disconnect', function () {
+            var pos = players.indexOf(name);
+            if (pos >= 0)
+            players.splice(pos, 1);
+        });
      });
 
     socket.on('server message', function(msg){
@@ -43,15 +48,15 @@ io.on('connection', function(socket){
     });
 
     socket.on('mouse', function(data){
-        socket.broadcast.emit('mouse', data);
+        io.emit('mouse', data);
     });
 
     socket.on('clear', function(){
-        socket.broadcast.emit('clear');
+        io.emit('clear');
     });
 
     socket.on('time', function(time){
-        socket.broadcast.emit('time', time);
+        io.emit('time', time);
     });
   });
 

@@ -65,11 +65,7 @@
       <canvas id="drawfield">
       </canvas>
       <div id="menubar">
-        <input type="button" id="butBlack" style="background-color: black; width: 20px;">
-        <input type="button" id="butRed" style="background-color: red; width: 20px;">
-        <input type="button" id="butBlue" style="background-color: blue; width: 20px;">
-        <input type="button" id="butGreen" style="background-color: green; width: 20px;">
-        <br>
+        <input type="color" id="butColors">
         <input type="button" id="butReset" style="background-color: rgb(151, 147, 147); height: 25px;" value="Delete">
       </div>
     </div>
@@ -100,6 +96,7 @@
         var socket = io();
         var players = [];
         var turnPlayer;
+        var turnIndex = 0;
 
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
@@ -108,22 +105,15 @@
         
         var canvas = document.getElementById('drawfield');
         var context = canvas.getContext('2d');
-        $('#butBlack').on('click', function(){
-          context.fillStyle = 'rgb(0, 0, 0)';
-          context.storkeStyle = 'rgb(0, 0, 0)';
-        });
-        $('#butRed').on('click', function(){
-          context.fillStyle = 'rgb(255, 0, 0)';
-          context.strokeStyle = 'rgb(255, 0, 0)';
-        });
-        $('#butGreen').on('click', function(){
-          context.fillStyle = 'rgb(0, 255, 0)';
-          context.strokeStyle = 'rgb(0, 255, 0)';
-        });
-        $('#butBlue').on('click', function(){
-          context.fillStyle = 'rgb(0, 0, 255)';
-          context.strokeStyle = 'rgb(0, 0, 255)';
-        });
+        var color = document.getElementById('butColors').value;
+        document.getElementById('butColors').addEventListener('change', pickColor, false);
+
+        function pickColor(e) {
+          color = e.target.value;
+          context.fillStyle = color;
+          context.strokeStyle = color;
+        };
+
         $('#butReset').on('click', function(){
           context.clearRect(0, 0, canvas.width, canvas.height);
           socket.emit('clear');
@@ -145,10 +135,8 @@
             context.fill();
             context.beginPath();
             context.moveTo(e.clientX, e.clientY);
-            var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
             sendMouse(e.clientX, e.clientY, color, dragging);
           }
-          var color = context.getImageData(e.clientX, e.clientY, 1, 1).data;
           sendMouse(e.clientX, e.clientY, color, dragging);
         }
 
@@ -234,17 +222,17 @@
           socket.on('connect message', function(name){
             $('#messages').append($('<li>').text(name + " connected"));
           });
-          socket.emit('connect message', $('#nickname').val());
 
-          socket.emit('adduser', $('#nickname').val());
+          socket.emit('connect message', $('#nickname').val());
 
           socket.emit('init', players);
 
-          $('#wordlist').css('display', 'block');
+          socket.emit('adduser', $('#nickname').val());
+
           $('#nickname').css('display', 'none');
           $('#nickSelect').css('display', 'none');
           $('form *').prop('disabled', false);
-
+          
           /* socket.on('server message',function(msg){
             if (players.length == 1){
               msg = 'waiting';
@@ -261,8 +249,21 @@
         });
 
         socket.on('adduser',function(name){
+          socket.emit('init',players);
             players.push(name);
             console.log(players); 
+            console.log(turnPlayer);
+            if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
+            $('#wordlist').css('display', 'block'); 
+          }else{
+            $('#wordlist').css('display', 'none'); 
+            $('form *').prop('disabled', true);
+          }
+          socket.once('disconnect', function () {
+              var pos = players.indexOf(name);
+              if (pos >= 0)
+              players.splice(pos, 1);
+          });
             /*
             socket.once('disconnect', function () {
               var pos = players.indexOf(name);
@@ -281,7 +282,14 @@
               context.clearRect(0, 0, canvas.width, canvas.height);
               canvas.addEventListener('mousedown', countdown);
               document.getElementById('time').innerHTML = "20";
+              turnIndex++;
+              if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
               $('#wordlist').css('display', 'block');
+              }else{
+                $('#wordlist').css('display', 'none');
+                $('form *').prop('disabled', true);
+              }
+              $('form *').prop('disabled', true);
               return;
             }, 1000);
           }
@@ -296,9 +304,8 @@
         socket.on('mouse', function(data) {
           var canvasNew = document.getElementById('drawfield');
           var contextNew = canvasNew.getContext('2d');
-          var hex = "#" + ("000000" + rgbToHex(data.c[0], data.c[1], data.c[2])).slice(-6);
-          contextNew.fillStyle = hex;
-          contextNew.strokeStyle = hex;
+          contextNew.fillStyle = data.c;
+          contextNew.strokeStyle = data.c;
           if (data.d) {
             context.lineTo(data.x, data.y);
             context.stroke();
@@ -321,10 +328,16 @@
 
           socket.on('chat message', function(msg, name){
             $('#messages').append($('<li>').text(name + ": "  + msg));
-          });
-
-          
+          });        
       });
+
+/*
+      function rnl(list){
+        var length = list.length;
+        turnIndex++;
+        return turnIndex;
+      }
+*/
     </script>  
   </body>
 </html>
