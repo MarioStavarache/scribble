@@ -12,21 +12,20 @@ http.listen(3000, function(){
   });
 
 io.on('connection', function(socket){
-    console.log('user ' + socket.id + ' connected');
 
     //socket.emit('entrance', {message: 'Welcome to the chat room!'}); 
-   // socket.emit('entrance', {message: 'Your ID is #' + socket.id}); 
+    //socket.emit('entrance', {message: 'Your ID is #' + socket.id}); 
 
-    socket.on('adduser', function (nickname) {
-        players.push(nickname);
-        socket.once('disconnect', function () {
-          var pos = players.indexOf(nickname);
- 
-          if (pos >= 0)
-          players.splice(pos, 1);
-        });
-        io.emit('adduser',nickname);
+    //adding a user to the players list.
+    socket.on('addUser', function (name) {
+        players.push(name);
+        io.emit('addUser', name);
+        io.emit('init', players);
      });
+
+    socket.on('server message', function(msg){
+        io.emit('server message', msg);
+    });
 
     /*
     socket.on('disconnect message', function(nickname){
@@ -34,6 +33,7 @@ io.on('connection', function(socket){
       io.emit('disconnect message', nickname);
     });
     */
+
     socket.on('connect message', function(nickname){
         io.emit('connect message', nickname);
     })
@@ -54,3 +54,5 @@ io.on('connection', function(socket){
         socket.broadcast.emit('time', time);
     });
   });
+
+  

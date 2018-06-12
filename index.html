@@ -82,7 +82,7 @@
     </div>
     <div id="timebox">
       <label>Time left:</label>
-      <label id="time">60</label>
+      <label id="time">20</label>
       <label>s</label>
     </div>
     <div id="wordlist">
@@ -99,6 +99,7 @@
       $(function () {
         var socket = io();
         var players = [];
+        var turnPlayer;
 
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
@@ -179,7 +180,7 @@
           if (time == 1) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             canvas.addEventListener('mousedown', countdown);
-            document.getElementById('time').innerHTML = "60";
+            document.getElementById('time').innerHTML = "20";
             $('#wordlist').css('display', 'block');
             return;
           }
@@ -214,22 +215,61 @@
           $('#drawfield').css("pointer-events", "auto");
         })    
 
-        $('#nickSelect').on('click', function(){
-          //$('#wordlist').css('display', 'block');
-          $('#nickname').css('display', 'none');
-          $('#nickSelect').css('display', 'none');
-          $('form *').prop('disabled', false);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+        $('#nickSelect').on('click', function(){
+          turnPlayer = $('#nickname').val();
           socket.on('connect message', function(name){
             $('#messages').append($('<li>').text(name + " connected"));
           });
           socket.emit('connect message', $('#nickname').val());
 
-          socket.on('adduser',function(name){
-            console.log(name + ' added');
-            players.push(name);
-          });
           socket.emit('adduser', $('#nickname').val());
+
+          socket.emit('init', players);
+
+          $('#wordlist').css('display', 'block');
+          $('#nickname').css('display', 'none');
+          $('#nickSelect').css('display', 'none');
+          $('form *').prop('disabled', false);
+
+          /* socket.on('server message',function(msg){
+            if (players.length == 1){
+              msg = 'waiting';
+            }else{
+              msg = 'ready';
+            }
+          });
+          socket.emit('server message',msg); */
+
+        });
+
+        socket.on('init', function(msg){
+              players = msg;
+        });
+
+        socket.on('adduser',function(name){
+            players.push(name);
+            console.log(players); 
+            /*
+            socket.once('disconnect', function () {
+              var pos = players.indexOf(name);
+              if (pos >= 0)
+              players.splice(pos, 1);
+            });
+            */
         });
 
         socket.on('time', function(time){
@@ -240,7 +280,7 @@
             timeout = setTimeout(function(){
               context.clearRect(0, 0, canvas.width, canvas.height);
               canvas.addEventListener('mousedown', countdown);
-              document.getElementById('time').innerHTML = "60";
+              document.getElementById('time').innerHTML = "20";
               $('#wordlist').css('display', 'block');
               return;
             }, 1000);
