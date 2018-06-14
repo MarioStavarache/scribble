@@ -106,6 +106,8 @@
         
         var canvas = document.getElementById('drawfield');
         var context = canvas.getContext('2d');
+        canvas.width = canvas.parentElement.getBoundingClientRect().width;
+        canvas.height = canvas.parentElement.getBoundingClientRect().height;
         var color = document.getElementById('butColors').value;
         document.getElementById('butColors').addEventListener('change', pickColor, false);
 
@@ -128,17 +130,19 @@
           putPoint(e);
         }
         var putPoint = function(e){
+          let currX = e.clientX - canvas.offsetLeft;
+          let currY = e.clientY - canvas.offsetTop;
           if (dragging) {
-            context.lineTo(e.clientX, e.clientY);
+            context.lineTo(currX, currY);
             context.stroke();
             context.beginPath();
-            context.arc(e.clientX, e.clientY, radius, 0, Math.PI*2);
+            context.arc(currX, currY, radius, 0, Math.PI*2);
             context.fill();
             context.beginPath();
-            context.moveTo(e.clientX, e.clientY);
-            sendMouse(e.clientX, e.clientY, color, dragging);
+            context.moveTo(currX, currY);
+            sendMouse(currX, currY, color, dragging);
           }
-          sendMouse(e.clientX, e.clientY, color, dragging);
+          sendMouse(currX, currY, color, dragging);
         }
 
         var disengage = function(e){
@@ -222,20 +226,24 @@
 
 
         $('#nickSelect').on('click', function(){
-          turnPlayer = $('#nickname').val();
-          socket.on('connect message', function(name){
-            $('#messages').append($('<li>').text(name + " connected"));
-          });
+          if($('#nickname').val() != ''){
+            turnPlayer = $('#nickname').val();
+            socket.on('connect message', function(name){
+             $('#messages').append($('<li>').text(name + " connected"));
+            });
 
-          socket.emit('connect message', $('#nickname').val());
+            socket.emit('connect message', $('#nickname').val());
 
-          socket.emit('init', players);
+            socket.emit('init', players);
 
-          socket.emit('adduser', $('#nickname').val());
+            socket.emit('adduser', $('#nickname').val());
 
-          $('#nickname').css('display', 'none');
-          $('#nickSelect').css('display', 'none');
-          $('form *').prop('disabled', false);
+            $('#nickname').css('display', 'none');
+            $('#nickSelect').css('display', 'none');
+            $('form *').prop('disabled', false);
+          }else{
+            alert('Enter Nickname');
+          }
           
           /* socket.on('server message',function(msg){
             if (players.length == 1){
@@ -336,7 +344,9 @@
           });
 
           socket.on('chat message', function(msg, name){
-            $('#messages').append($('<li>').text(name + ": "  + msg));
+            if(msg != ''){
+              $('#messages').append($('<li>').text(name + ": "  + msg));
+            }
           });        
       });
 
