@@ -78,7 +78,7 @@
     </div>
     <div id="timebox">
       <label>Time left:</label>
-      <label id="time">20</label>
+      <label id="time">7</label>
       <label>s</label>
     </div>
     <div id="wordlist">
@@ -97,6 +97,7 @@
         var players = [];
         var turnPlayer;
         var turnIndex = 0;
+        var turnRound = 0;
 
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
@@ -168,7 +169,7 @@
           if (time == 1) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             canvas.addEventListener('mousedown', countdown);
-            document.getElementById('time').innerHTML = "20";
+            document.getElementById('time').innerHTML = "7";
             $('#wordlist').css('display', 'block');
             return;
           }
@@ -189,18 +190,21 @@
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
+          $('form *').prop('disabled', true);
         })       
         $('#radio2').click(function(){
           word = $('#word2').text();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
+          $('form *').prop('disabled', true);
         })   
         $('#radio3').click(function(){
           word = $('#word3').text();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
+          $('form *').prop('disabled', true);
         })    
 
 
@@ -254,23 +258,15 @@
             console.log(players); 
             console.log(turnPlayer);
             if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
-            $('#wordlist').css('display', 'block'); 
-          }else{
-            $('#wordlist').css('display', 'none'); 
-            $('form *').prop('disabled', true);
-          }
-          socket.once('disconnect', function () {
-              var pos = players.indexOf(name);
-              if (pos >= 0)
-              players.splice(pos, 1);
-          });
-            /*
-            socket.once('disconnect', function () {
-              var pos = players.indexOf(name);
-              if (pos >= 0)
-              players.splice(pos, 1);
-            });
-            */
+              $('#wordlist').css('display', 'block'); 
+            }else{
+              $('#wordlist').css('display', 'none'); 
+              $('#drawboard *').prop('disabled', true);
+              $('#drawfield').css("pointer-events", "none");
+            }
+          $('#drawboard *').prop('disabled', true);
+          $('#drawfield').css("pointer-events", "none");
+
         });
 
         socket.on('time', function(time){
@@ -281,15 +277,28 @@
             timeout = setTimeout(function(){
               context.clearRect(0, 0, canvas.width, canvas.height);
               canvas.addEventListener('mousedown', countdown);
-              document.getElementById('time').innerHTML = "20";
-              turnIndex++;
+              document.getElementById('time').innerHTML = "7";
+              if (turnIndex == (players.length - 1)){
+                if (turnRound != 1) {
+                  turnIndex = 0;
+                  turnRound++;
+                }else{
+                  return;
+                }
+              }else{
+                turnIndex++;
+              }
+              console.log(turnIndex);
               if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
-              $('#wordlist').css('display', 'block');
+                $('#wordlist').css('display', 'block');
               }else{
                 $('#wordlist').css('display', 'none');
-                $('form *').prop('disabled', true);
+                $('#drawboard *').prop('disabled', true);
+                $('#drawfield').css("pointer-events", "none");
               }
-              $('form *').prop('disabled', true);
+              $('#drawboard *').prop('disabled', true);
+              $('#drawfield').css("pointer-events", "none");
+              $('form *').prop('disabled', false);
               return;
             }, 1000);
           }
@@ -338,6 +347,7 @@
         return turnIndex;
       }
 */
+
     </script>  
   </body>
 </html>

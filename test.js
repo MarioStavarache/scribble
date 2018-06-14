@@ -12,7 +12,6 @@ http.listen(3000, function(){
   });
 
 io.on('connection', function(socket){
-
     //socket.emit('entrance', {message: 'Welcome to the chat room!'}); 
     //socket.emit('entrance', {message: 'Your ID is #' + socket.id}); 
 
@@ -23,21 +22,16 @@ io.on('connection', function(socket){
         io.emit('adduser', name);
         socket.once('disconnect', function () {
             var pos = players.indexOf(name);
+   
             if (pos >= 0)
-            players.splice(pos, 1);
-        });
+              players.splice(pos, 1);
+          });
      });
+
 
     socket.on('server message', function(msg){
         io.emit('server message', msg);
     });
-
-    /*
-    socket.on('disconnect message', function(nickname){
-      console.log(nickname + " disconnected");
-      io.emit('disconnect message', nickname);
-    });
-    */
 
     socket.on('connect message', function(nickname){
         io.emit('connect message', nickname);
