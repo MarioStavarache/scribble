@@ -1,10 +1,10 @@
-<!doctype html>
+<doctype html>
 <html>
   <head>
-    <title>Socket.IO chat</title>
+    <title>Scribble.io</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font: 13px Helvetica, Arial; background-color:rgb(88, 88, 247);}
+      body { font: 15px Helvetica, Arial; background-color:rgb(88, 88, 247);}
       form { 
         background: #000;        
       }
@@ -29,7 +29,7 @@
         margin-left: 10px;
         margin-bottom: 10px;
         height: 500px;
-        width: 60%;
+        width: 80%;
       }
       #drawfield {
         background-color: white; 
@@ -41,7 +41,7 @@
       #chatbox {
         background-color:white;
         float: right;
-        width: 250px;
+        width: 380px;
         margin-top: 10px;
         margin-right: 10px;
         height: 500px; 
@@ -49,56 +49,90 @@
       }
       #timebox{
         margin-right: 10px;
-        margin-left: 90%;
-        float: right;
+        margin-left: 70%;
+        float: left;
       }
       .box {
         float: left;
       }
-      #wordlist {
-        margin-left: 75%;
+      .itemMain { grid-area: main; }
+      .itemRight { grid-area: right; }
+      .itemLeft { grid-area: left; }
+      .itemWords { grid-area: wordlist; }
+      .grid-container {
+        display: grid;
+        grid-template-areas:
+        'left main main main wordlist right'
+        'left main main main wordlist right'
+        'left main main main wordlist right';
+        grid-gap: 10px;
+        padding: 10px;
       }
     </style>
   </head>
   <body>
-    <div id="drawboard" class="box">
-      <canvas id="drawfield">
-      </canvas>
-      <div id="menubar">
-        <input type="color" id="butColors">
-        <input type="button" id="butReset" style="background-color: rgb(151, 147, 147); height: 25px;" value="Delete">
+    <div class="grid-container">
+      <div id="drawboard" class="itemMain">
+        <canvas id="drawfield"></canvas>
+        <div id="menubar">
+          <input type="color" id="butColors">
+          <input type="button" id="butReset" style="background-color: rgb(151, 147, 147); height: 25px;" value="Löschen">
+        </div>
+      </div>
+      <div class="itemWords" id="wordlist">
+        <input type="button" name="drawword" id="button1" value="Baum"><br>
+        <input type="button" name="drawword" id="button2" value="Auto"><br>
+        <input type="button" name="drawword" id="button3" value="Haus">
+      </div>
+      <div class="itemRight">
+        <div id="chatbox" class="box">  
+          <input id="nickname" autocomplete="off" placeholder="Spielername"><button id="nickSelect">Auswählen</button> 
+          <ul id="messages"></ul>
+          <form action="">
+            <input id="m" autocomplete="off" placeholder="Nachricht"/><button>Senden</button>
+          </form>
+        </div>
+        <div id="timebox">
+          <label>Verbleibende Zeit:</label>
+          <label id="time">60</label>
+          <label>s</label>
+        </div>
+      </div>
+      <div id="itemLeft">
+        <h1>Punktestand</h1>
+        <ul id="leaderBoard"></ul>
       </div>
     </div>
-    <div id="chatbox" class="box">  
-      <input id="nickname" autocomplete="off" placeholder="Nickname"><button id="nickSelect">Select</button> 
-      <ul id="messages"></ul>
-      <form action="">
-          <input id="m" autocomplete="off" placeholder="Message"/><button>Send</button>
-      </form>
-    </div>
-    <div id="timebox">
-      <label>Time left:</label>
-      <label id="time">7</label>
-      <label>s</label>
-    </div>
-    <div id="wordlist">
-        <input type="radio" name="drawword" id="radio1"><label id="word1">Baum</label><br>
-        <input type="radio" name="drawword" id="radio2"><label id="word2">Auto</label><br>
-        <input type="radio" name="drawword" id="radio3"><label id="word3">Haus</label>
-    </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.dev.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
 
     <script>
       $(function () {
+        //all necessary variables
         var socket = io();
         var players = [];
         var turnPlayer;
         var turnIndex = 0;
         var turnRound = 0;
+        var points = [];
+        var exampleWords = ['Baum','Auto','Haus','Mensch','Ball','Stift','Käfer',
+        'Kaktus','Blume','Computer','Brille','Schuh','Schlüssel','Becher','Kopfhörer',
+        'Buch','Hose','Katze','Hund','Pinguin','Maus','Vogel','Auge','Hut','Kamera', 'Uhr',
+        'Dose', 'Kappe', 'Tastatur', 'Sessel', 'Strand', 'Meer', 'Tor', 'Tür', 'Dreieck', 'Kreis', 'Vase',
+        'Garten', 'Schule', 'Ritter', 'Laptop', 'Hand', 'Geld', 'Tisch', 'Tafel', 'Handy', 'Kuh', 'Ampel', 'Müll',
+        'Baum','Auto','Haus','Mensch','Ball','Stift','Käfer',
+        'Kaktus','Blume','Computer','Brille','Schuh','Schlüssel','Becher','Kopfhörer',
+        'Buch','Hose','Katze','Hund','Pinguin','Maus','Vogel','Auge','Hut','Kamera', 'Uhr',
+        'Dose', 'Kappe', 'Tastatur', 'Sessel', 'Strand', 'Meer', 'Tor', 'Tür', 'Dreieck', 'Kreis', 'Vase',
+        'Garten', 'Schule', 'Ritter', 'Laptop', 'Hand', 'Geld', 'Tisch', 'Tafel', 'Handy', 'Kuh', 'Ampel', 'Müll'];
+        
+        socket.emit('init', players);
 
+        $('#button1').prop('value', randomWord(exampleWords));
+        $('#button2').prop('value', randomWord(exampleWords));
+        $('#button3').prop('value', randomWord(exampleWords));
+        
         $('#drawboard *').prop('disabled', true);
         $('#wordlist').css('display', 'none');
         $('form *').prop('disabled', true);
@@ -116,7 +150,8 @@
           context.fillStyle = color;
           context.strokeStyle = color;
         };
-
+        
+        //button initiation to reset the whiteboard.
         $('#butReset').on('click', function(){
           context.clearRect(0, 0, canvas.width, canvas.height);
           socket.emit('clear');
@@ -150,6 +185,7 @@
           context.beginPath();
         }
 
+        //function to send mouse data; the position of the mouse.
         function sendMouse(posX, posY, color, dragging) {
           var data = {
             x: posX,
@@ -159,12 +195,8 @@
           };
           socket.emit('mouse', data);
         }
-
-        function rgbToHex(r, g, b) {
-          if (r > 255 || g > 255 || b > 255)
-              throw "Invalid color component";
-          return ((r << 16) | (g << 8) | b).toString(16);
-        }
+        
+        //time function 1; the whiteboard is just available for a certain amount of time. 
         var time;
         var countdown = function() {
           canvas.removeEventListener('mousedown', countdown);
@@ -173,7 +205,7 @@
           if (time == 1) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             canvas.addEventListener('mousedown', countdown);
-            document.getElementById('time').innerHTML = "7";
+            document.getElementById('time').innerHTML = "60";
             $('#wordlist').css('display', 'block');
             return;
           }
@@ -182,101 +214,139 @@
           socket.emit('time', time);
           document.getElementById('time').innerHTML = time;
           timeout = setTimeout(countdown, 1000);
-        } 
+        }
+
         canvas.addEventListener('mousedown', engage);
         canvas.addEventListener('mousedown', countdown);
         canvas.addEventListener('mousemove', putPoint);
         canvas.addEventListener('mouseup', disengage);
 
+        $(document).keydown(function(event) {
+          if (event.ctrlKey==true && (event.which == '61' || event.which == '107' || event.which == '173' || 
+              event.which == '109'  || event.which == '187'  || event.which == '189'  ) ) {
+            event.preventDefault();
+          }
+        });
+
+        $(window).bind('mousewheel DOMMouseScroll', function (event) {
+          if (event.ctrlKey == true) {
+            event.preventDefault();
+          }
+        });
+        
+        //buttons to choose the word are enabled when it's the drawers turn; the buttons are only visible to him
         var word;
-        $('#radio1').click(function(){
-          word = $('#word1').text();
+        $('#button1').click(function(){
+          word = $('#button1').val().toLowerCase();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
           $('form *').prop('disabled', true);
+          socket.emit('word', word);
         })       
-        $('#radio2').click(function(){
-          word = $('#word2').text();
+        $('#button2').click(function(){
+          word = $('#button2').val().toLowerCase();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
           $('form *').prop('disabled', true);
+          socket.emit('word', word);
         })   
-        $('#radio3').click(function(){
-          word = $('#word3').text();
+        $('#button3').click(function(){
+          word = $('#button3').val().toLowerCase();
           $('#wordlist').css('display', 'none');
           $('#drawboard *').prop('disabled', false);
           $('#drawfield').css("pointer-events", "auto");
           $('form *').prop('disabled', true);
+          socket.emit('word', word);
         })    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        //input for the nickname; a user MUST enter a nickname and there can't be double names.
         $('#nickSelect').on('click', function(){
           if($('#nickname').val() != ''){
-            turnPlayer = $('#nickname').val();
-            socket.on('connect message', function(name){
-             $('#messages').append($('<li>').text(name + " connected"));
-            });
+            var double = false;
 
-            socket.emit('connect message', $('#nickname').val());
-
-            socket.emit('init', players);
-
-            socket.emit('adduser', $('#nickname').val());
-
-            $('#nickname').css('display', 'none');
-            $('#nickSelect').css('display', 'none');
-            $('form *').prop('disabled', false);
-          }else{
+            for (let i = 0; i < players.length; i++) {
+              if (players[i] == $('#nickname').val()){
+                double = true;
+              } 
+            }
+            
+          if (double == false) {
+              turnPlayer = $('#nickname').val();
+              socket.emit('connect message', $('#nickname').val());
+              socket.emit('init', players);
+              socket.emit('adduser', $('#nickname').val());
+              socket.on('connect message', function(name){
+                $('#messages').append($('<li>').text(name + " hat sich verbunden"));
+                $('#nickname').css('display', 'none');
+                $('#nickSelect').css('display', 'none');
+              });
+            } else {
+              points = socket.on('ka');
+              console.log(points);
+            }
+          } else {
             alert('Enter Nickname');
           }
-          
-          /* socket.on('server message',function(msg){
-            if (players.length == 1){
-              msg = 'waiting';
-            }else{
-              msg = 'ready';
-            }
-          });
-          socket.emit('server message',msg); */
-
         });
-
+        
+        //initializing the players list from server to client.
         socket.on('init', function(msg){
-              players = msg;
+          players = msg;
         });
-
+        
+        //initializing the points list from server to client.
+        socket.on('end', function(msg){
+          points = msg;
+        });
+        
+        //disconnect event; others can play further
+        socket.on('disconnect',function(){
+          $('#wordlist').css('display', 'none'); 
+          $('form *').prop('disabled', false);
+          if (JSON.stringify(players[turnIndex]) == JSON.stringify(players[0])){
+            socket.emit('clear');
+            $('#drawboard *').prop('disabled', true);
+            $('#drawfield').css("pointer-events", "none");
+            socket.emit('time',1);
+            turnIndex++;
+            turnRound--;
+          }else{
+            turnIndex = 0;
+            turnRound--;
+          }
+          if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
+               $('#wordlist').css('display', 'block'); 
+               $('form *').prop('disabled', true);
+          }
+        });
+        
+        //a is connected to the players list and the first one is the drawer.
         socket.on('adduser',function(name){
           socket.emit('init',players);
             players.push(name);
-            console.log(players); 
-            console.log(turnPlayer);
-            if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
-              $('#wordlist').css('display', 'block'); 
-            }else{
-              $('#wordlist').css('display', 'none'); 
-              $('#drawboard *').prop('disabled', true);
-              $('#drawfield').css("pointer-events", "none");
-            }
-          $('#drawboard *').prop('disabled', true);
-          $('#drawfield').css("pointer-events", "none");
-
+            if(players.length >= 2){
+              if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
+                $('#wordlist').css('display', 'block'); 
+                $('form *').prop('disabled', true);
+              }else{
+                $('#wordlist').css('display', 'none'); 
+                $('#drawboard *').prop('disabled', true);
+                $('#drawfield').css("pointer-events", "none");
+                $('form *').prop('disabled', false);
+              }
+            $('#drawboard *').prop('disabled', true);
+            $('#drawfield').css("pointer-events", "none");
+          }else{
+            $('#wordlist').css('display', 'none'); 
+            $('#drawboard *').prop('disabled', true);
+            $('#drawfield').css("pointer-events", "none");
+            $('form *').prop('disabled', false);
+          }
         });
-
+        
+        //whilst a user draws time runs up; after that the next player has to draw; the drawer can't chat and the others can't draw 
         socket.on('time', function(time){
           var canvas = document.getElementById('drawfield');
           var context = canvas.getContext('2d');
@@ -285,39 +355,46 @@
             timeout = setTimeout(function(){
               context.clearRect(0, 0, canvas.width, canvas.height);
               canvas.addEventListener('mousedown', countdown);
-              document.getElementById('time').innerHTML = "7";
-              if (turnIndex == (players.length - 1)){
+              document.getElementById('time').innerHTML = "60";
+              if ((turnIndex == (players.length - 1)) || (turnIndex == players.length)){
                 if (turnRound != 1) {
                   turnIndex = 0;
                   turnRound++;
                 }else{
-                  return;
+                  //socket.emit('end');
+                  //console.log(points);
+                  turnIndex = -1;
+                  //  console.log(winnerEvaluation(players, this.points));
                 }
               }else{
                 turnIndex++;
               }
-              console.log(turnIndex);
-              if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
-                $('#wordlist').css('display', 'block');
-              }else{
-                $('#wordlist').css('display', 'none');
+              if(players.length >= 2){
+                if (JSON.stringify(players[turnIndex]) == JSON.stringify(turnPlayer)){
+                  $('#wordlist').css('display', 'block');
+                  $('form *').prop('disabled', true);
+
+                }else{
+                  $('#wordlist').css('display', 'none');
+                  $('#drawboard *').prop('disabled', true);
+                  $('#drawfield').css("pointer-events", "none");
+                  $('form *').prop('disabled', false);
+                }
                 $('#drawboard *').prop('disabled', true);
                 $('#drawfield').css("pointer-events", "none");
               }
-              $('#drawboard *').prop('disabled', true);
-              $('#drawfield').css("pointer-events", "none");
-              $('form *').prop('disabled', false);
               return;
             }, 1000);
           }
         });
-
+        
+        //clearing the whiteboard
         socket.on('clear', function(){
           var cCanvas = document.getElementById('drawfield');
           var context = cCanvas.getContext('2d');
           context.clearRect(0, 0, cCanvas.width, cCanvas.height);
         });
-
+        
         socket.on('mouse', function(data) {
           var canvasNew = document.getElementById('drawfield');
           var contextNew = canvasNew.getContext('2d');
@@ -336,7 +413,8 @@
             contextNew.beginPath();
           }
         });
-
+        
+        //submit button for chat message initialized.
         $('form').submit(function(){
           socket.emit('chat message', $('#m').val(), $('#nickname').val());
             $('#m').val('');
@@ -344,20 +422,51 @@
           });
 
           socket.on('chat message', function(msg, name){
-            if(msg != ''){
+            if((msg != '')){
               $('#messages').append($('<li>').text(name + ": "  + msg));
             }
-          });        
+          }); 
+          
+          //the right message is highlighted
+          socket.on('right message', function(msg, name){
+            $('#messages').append($('<li style="background-color: green;">').text(name + ": "  + msg));
+            alert(name + " hat das Wort erraten!");
+          });
+          
+          //initializing the leaderBoard.
+          socket.on('leaderBoard', function(players, points){
+            $('#leaderBoard').empty();
+            for (let i = 0; i < players.length; i++) {
+              $('#leaderBoard').append($('<li>').text(players[i] + " " + points[i]));        
+            }
+          });
       });
+      
+      //function to get a random word out of the word examples.
+      function randomWord(exampleWords){
+        var rand = exampleWords[Math.floor(Math.random() * exampleWords.length)];
+        return rand;
+      }
 
 /*
-      function rnl(list){
-        var length = list.length;
-        turnIndex++;
-        return turnIndex;
+      function winnerEvaluation(playersList, scoreList){
+         var winners;
+        var help = [];
+        var mostPoints;
+        mostPoints = scoreList[0];
+        for (let k = 0; k < scoreList.length; k++) {
+          if (scoreList[k] > mostPoints){
+            mostPoints = scoreList[k];
+          }
+        }
+        for (let l = 0; l < scoreList.length; l++) {
+          if(scoreList[l] == mostPoints){
+            winners += playersList[l];   
+          }
+        }
+        return scoreList[1];
       }
 */
-
     </script>  
   </body>
 </html>
